@@ -3,7 +3,6 @@ package org.xuxiaoxiao.learnimoocandroidasyncload;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.ListView;
 
 import org.json.JSONArray;
@@ -22,7 +21,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ListView mListView;
-    private static String URL = "http://www.imooc.com/api/teacher?type=4&num=30";
+    //  num 后面的数据是要获取多少个对象
+    private static String URL = "http://www.imooc.com/api/teacher?type=4&num=15";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,27 +34,44 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    class NewsAsyncTask extends AsyncTask<String,Void,List<NewsBean> > {
+    /**
+     * 实现网络的异步访问
+     */
+    class NewsAsyncTask extends AsyncTask<String, Void, List<NewsBean>> {
 
         @Override
         protected List<NewsBean> doInBackground(String... params) {
 
             return getJsonData(params[0]);
         }
+
+        @Override
+        protected void onPostExecute(List<NewsBean> result) {
+            // TODO Auto-generated method stub
+            super.onPostExecute(result);
+            NewsAdapter adapter = new NewsAdapter(MainActivity.this, result);
+            mListView.setAdapter(adapter);
+        }
     }
 
+    /**
+     * 将 url 对应的JSON格式数据转化为封装的NewsBean
+     *
+     * @param url
+     * @return
+     */
     private List<NewsBean> getJsonData(String url) {
-
         List<NewsBean> newsBeanList = new ArrayList<NewsBean>();
         try {
+            // 用简单粗暴的方式获得网络数据
             String jsonString = readStream(new URL(url).openStream());
-            Log.d("xys", jsonString);
+//            Log.d("xys", jsonString);
             JSONObject jsonObject;
             NewsBean newsBean;
             try {
                 jsonObject = new JSONObject(jsonString);
                 JSONArray jsonArray = jsonObject.getJSONArray("data");
-                for(int i= 0 ; i < jsonArray.length(); i++){
+                for (int i = 0; i < jsonArray.length(); i++) {
                     jsonObject = jsonArray.getJSONObject(i);
                     newsBean = new NewsBean();
                     newsBean.newsIconUrl = jsonObject.getString("picSmall");
@@ -77,8 +94,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-
+    /**
+     * 通过is解析网页返回的数据
+     *
+     * @param is
+     * @return
+     */
     private String readStream(InputStream is) {
         InputStreamReader isr;
         String result = "";

@@ -6,6 +6,7 @@
               android:padding="4dp">
 
     <ImageView
+        android:id="@+id/iv_icon"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:src="@mipmap/ic_launcher"
@@ -22,6 +23,7 @@
             android:id="@+id/tv_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:textSize="15sp"
             android:maxLines="1"
             android:text="Title"
