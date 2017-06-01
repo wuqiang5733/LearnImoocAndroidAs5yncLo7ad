@@ -22,7 +22,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private ListView mListView;
     //  num 后面的数据是要获取多少个对象
-    private static String URL = "http://www.imooc.com/api/teacher?type=4&num=15";
+    private static String URL = "http://www.imooc.com/api/teacher?type=4&num=20";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

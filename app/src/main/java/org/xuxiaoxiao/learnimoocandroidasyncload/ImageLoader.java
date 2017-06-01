@@ -2,6 +2,7 @@ package org.xuxiaoxiao.learnimoocandroidasyncload;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.ImageView;
@@ -22,16 +23,16 @@ public class ImageLoader {
     private ImageView mImageView;
     private String mUrl;
 
-    private Handler mHandler = new Handler(){
+    private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (mImageView.getTag().equals(mUrl))
-            mImageView.setImageBitmap((Bitmap) msg.obj);
+                mImageView.setImageBitmap((Bitmap) msg.obj);
         }
     };
 
-    public void showImageByThread(ImageView imageView,final String url) {
+    public void showImageByThread(ImageView imageView, final String url) {
         mImageView = imageView;
         mUrl = url;
 
@@ -46,6 +47,7 @@ public class ImageLoader {
             }
         }.start();
     }
+
     public Bitmap getBitmapFromURL(String urlString) {
         Bitmap bitmap;
         InputStream is = null;
@@ -55,15 +57,17 @@ public class ImageLoader {
             is = new BufferedInputStream(connection.getInputStream());
             bitmap = BitmapFactory.decodeStream(is);
             connection.disconnect();
-            Thread.sleep(1600);
+//            Thread.sleep(900);
             return bitmap;
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
+        }
+//        catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+        finally {
             try {
                 is.close();
             } catch (IOException e) {
@@ -73,7 +77,31 @@ public class ImageLoader {
         return null;
     }
 
+    public void showImageByAsyncTask(ImageView imageView, String url) {
+        new NewsAsyncTask(imageView,url).execute(url);
+    }
 
+    private class NewsAsyncTask extends AsyncTask<String, Void, Bitmap> {
+        private ImageView mImageView;
+        private String mUrl;
+
+        public NewsAsyncTask(ImageView imageView,String url) {
+            mImageView = imageView;
+            mUrl = url;
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            return getBitmapFromURL(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            if (mImageView.getTag().equals(mUrl))
+            mImageView.setImageBitmap(bitmap);
+        }
+    }
     /*
     public ImageLoader(ListView listView) {
         mListView = listView;

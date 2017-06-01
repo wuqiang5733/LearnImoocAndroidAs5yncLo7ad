@@ -60,7 +60,8 @@ public class NewsAdapter extends BaseAdapter{
         viewHolder.iv_Icon.setImageResource(R.drawable.ic_launcher);
         String url = mList.get(position).newsIconUrl;
         viewHolder.iv_Icon.setTag(url);
-        new ImageLoader().showImageByThread(viewHolder.iv_Icon,url);
+//        new ImageLoader().showImageByThread(viewHolder.iv_Icon,url);
+        new ImageLoader().showImageByAsyncTask(viewHolder.iv_Icon, url);
         viewHolder.tv_title.setText(mList.get(position).newsTitle);
         viewHolder.tv_content.setText(mList.get(position).newsContent);
 
