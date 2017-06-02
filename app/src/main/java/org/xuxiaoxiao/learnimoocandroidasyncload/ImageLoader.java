@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
+import android.util.LruCache;
 import android.widget.ImageView;
 
 import java.io.BufferedInputStream;
@@ -22,6 +23,33 @@ import java.net.URL;
 public class ImageLoader {
     private ImageView mImageView;
     private String mUrl;
+    private LruCache<String, Bitmap> mLruCache;
+
+    public ImageLoader() {
+        // 获取最大可用内存
+        int maxMemory = (int) Runtime.getRuntime().maxMemory();
+        int cacheSize = maxMemory / 8;
+        mLruCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            // 这个方法在每次加入缓存的时候都会被调用
+            protected int sizeOf(String key, Bitmap value) {
+//                Log.d("WQWQ_Sizeof","SizeOf");
+                return value.getByteCount();
+            }
+        };
+    }
+
+
+    public void addBitmapToCache(String url, Bitmap bm) {
+        if (getBitmapFromCache(url) == null) {
+            mLruCache.put(url, bm);
+//            Log.d("WQWQ_addBitmapToCache","addBitmapToCache");
+        }
+    }
+
+    public Bitmap getBitmapFromCache(String url) {
+        return mLruCache.get(url);
+    }
 
     private Handler mHandler = new Handler() {
         @Override
@@ -78,28 +106,40 @@ public class ImageLoader {
     }
 
     public void showImageByAsyncTask(ImageView imageView, String url) {
-        new NewsAsyncTask(imageView,url).execute(url);
+        Bitmap bitmap = getBitmapFromCache(url);
+        if (bitmap == null) {
+//            Log.d("WQWQ","没有取到图片");
+            new NewsAsyncTask(imageView, url).execute(url);
+        } else {
+            imageView.setImageBitmap(bitmap);
+        }
     }
 
     private class NewsAsyncTask extends AsyncTask<String, Void, Bitmap> {
         private ImageView mImageView;
         private String mUrl;
 
-        public NewsAsyncTask(ImageView imageView,String url) {
+        public NewsAsyncTask(ImageView imageView, String url) {
             mImageView = imageView;
             mUrl = url;
         }
 
         @Override
         protected Bitmap doInBackground(String... params) {
-            return getBitmapFromURL(params[0]);
+            String url = params[0];
+            Bitmap bitmap = getBitmapFromURL(url);
+            if (bitmap != null) {
+                // 加入缓存中没有的图片(在加入的时候，会做一个是否已经存在的判断)
+                addBitmapToCache(url, bitmap);
+            }
+            return bitmap;
         }
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
             if (mImageView.getTag().equals(mUrl))
-            mImageView.setImageBitmap(bitmap);
+                mImageView.setImageBitmap(bitmap);
         }
     }
     /*
