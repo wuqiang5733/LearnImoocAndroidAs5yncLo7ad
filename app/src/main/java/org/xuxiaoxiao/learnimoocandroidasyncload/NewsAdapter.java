@@ -4,8 +4,10 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -15,12 +17,24 @@ import java.util.List;
  */
 
 
-public class NewsAdapter extends BaseAdapter{
+public class NewsAdapter extends BaseAdapter implements AbsListView.OnScrollListener{
     private List<NewsBean> mList;
     private LayoutInflater mInflater;
-    public NewsAdapter(Context context, List<NewsBean> list){
-        mList = list;
+    private ImageLoader mImageLoader;
+    private int mStart,mEnd;
+    // 保存当前所有获得图片的URL地址
+    public static String[] URLS;
+
+    public NewsAdapter(Context context, List<NewsBean> data, ListView listView){
+        mList = data;
         mInflater = LayoutInflater.from(context);
+        // 这样就只会有一个LruCache存在
+        mImageLoader = new ImageLoader(listView);
+        URLS = new String[data.size()];
+        for (int i=0;i<data.size();i++){
+            URLS[i] = data.get(i).newsIconUrl;
+        }
+        listView.setOnScrollListener(this);
     }
 
     @Override
@@ -61,11 +75,28 @@ public class NewsAdapter extends BaseAdapter{
         String url = mList.get(position).newsIconUrl;
         viewHolder.iv_Icon.setTag(url);
 //        new ImageLoader().showImageByThread(viewHolder.iv_Icon,url);
-        new ImageLoader().showImageByAsyncTask(viewHolder.iv_Icon, url);
+        mImageLoader.showImageByAsyncTask(viewHolder.iv_Icon, url);
         viewHolder.tv_title.setText(mList.get(position).newsTitle);
         viewHolder.tv_content.setText(mList.get(position).newsContent);
 
         return convertView;
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+       if (scrollState == SCROLL_STATE_IDLE){
+           // 加载可见项
+           mImageLoader.loadImages(mStart,mEnd);
+       }else {
+           // 停止加载
+           mImageLoader.cancelAllTasks();
+       }
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        mStart = firstVisibleItem;
+        mEnd = firstVisibleItem + visibleItemCount;
     }
 
     class ViewHolder{

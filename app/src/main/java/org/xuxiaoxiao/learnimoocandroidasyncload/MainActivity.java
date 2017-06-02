@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(List<NewsBean> result) {
             // TODO Auto-generated method stub
             super.onPostExecute(result);
-            NewsAdapter adapter = new NewsAdapter(MainActivity.this, result);
+            NewsAdapter adapter = new NewsAdapter(MainActivity.this, result,mListView);
             mListView.setAdapter(adapter);
         }
     }

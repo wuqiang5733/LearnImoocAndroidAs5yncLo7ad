@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.LruCache;
 import android.widget.ImageView;
+import android.widget.ListView;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -14,6 +15,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by WuQiang on 2017/6/1.
@@ -24,8 +27,12 @@ public class ImageLoader {
     private ImageView mImageView;
     private String mUrl;
     private LruCache<String, Bitmap> mLruCache;
+    private ListView mListView;
+    private Set<NewsAsyncTask> mTask;
 
-    public ImageLoader() {
+    public ImageLoader(ListView listView) {
+        mListView = listView;
+        mTask = new HashSet<>();
         // 获取最大可用内存
         int maxMemory = (int) Runtime.getRuntime().maxMemory();
         int cacheSize = maxMemory / 8;
@@ -105,22 +112,47 @@ public class ImageLoader {
         return null;
     }
 
+    public void loadImages(int start, int end) {
+        for (int i = start; i < end; i++) {
+            String url = NewsAdapter.URLS[i];
+
+            Bitmap bitmap = getBitmapFromCache(url);
+            if (bitmap == null) {
+//                new NewsAsyncTask(imageView, url).execute(url);
+                NewsAsyncTask task = new NewsAsyncTask(url);
+                task.execute(url);
+                mTask.add(task);
+            } else {
+                ImageView imageView = (ImageView) mListView.findViewWithTag(url);
+                imageView.setImageBitmap(bitmap);
+            }
+        }
+    }
+
     public void showImageByAsyncTask(ImageView imageView, String url) {
         Bitmap bitmap = getBitmapFromCache(url);
         if (bitmap == null) {
-//            Log.d("WQWQ","没有取到图片");
-            new NewsAsyncTask(imageView, url).execute(url);
+//            new NewsAsyncTask( url).execute(url);
+            imageView.setImageResource(R.mipmap.ic_launcher);
         } else {
             imageView.setImageBitmap(bitmap);
         }
     }
 
+    public void cancelAllTasks() {
+        if (mTask != null) {
+            for (NewsAsyncTask task : mTask) {
+                task.cancel(false);
+            }
+        }
+    }
+
     private class NewsAsyncTask extends AsyncTask<String, Void, Bitmap> {
-        private ImageView mImageView;
+        //        private ImageView mImageView;
         private String mUrl;
 
-        public NewsAsyncTask(ImageView imageView, String url) {
-            mImageView = imageView;
+        public NewsAsyncTask(String url) {
+//            mImageView = imageView;
             mUrl = url;
         }
 
@@ -138,8 +170,13 @@ public class ImageLoader {
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
-            if (mImageView.getTag().equals(mUrl))
-                mImageView.setImageBitmap(bitmap);
+//            if (mImageView.getTag().equals(mUrl))
+//                mImageView.setImageBitmap(bitmap);
+            ImageView imageView = (ImageView) mListView.findViewWithTag(mUrl);
+            if (imageView != null && bitmap != null) {
+                imageView.setImageBitmap(bitmap);
+            }
+            mTask.remove(this);
         }
     }
     /*
