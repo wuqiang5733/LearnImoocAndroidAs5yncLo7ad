@@ -24,6 +24,7 @@ public class NewsAdapter extends BaseAdapter implements AbsListView.OnScrollList
     private int mStart,mEnd;
     // 保存当前所有获得图片的URL地址
     public static String[] URLS;
+    private boolean mFirstIn;
 
     public NewsAdapter(Context context, List<NewsBean> data, ListView listView){
         mList = data;
@@ -34,6 +35,7 @@ public class NewsAdapter extends BaseAdapter implements AbsListView.OnScrollList
         for (int i=0;i<data.size();i++){
             URLS[i] = data.get(i).newsIconUrl;
         }
+        mFirstIn = true;
         listView.setOnScrollListener(this);
     }
 
@@ -97,6 +99,11 @@ public class NewsAdapter extends BaseAdapter implements AbsListView.OnScrollList
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         mStart = firstVisibleItem;
         mEnd = firstVisibleItem + visibleItemCount;
+        // 第一次显示的时候调用
+        if (mFirstIn && visibleItemCount > 0){
+            mImageLoader.loadImages(mStart,mEnd);
+            mFirstIn = false;
+        }
     }
 
     class ViewHolder{
